@@ -12,6 +12,22 @@ use Wine, CrossOver, a Windows VM, or binary translation.
 ![Architecture](https://img.shields.io/badge/architecture-arm64-007AFF)
 ![Status](https://img.shields.io/badge/status-in%20development-F59E0B)
 
+<p align="center">
+  <strong>Download v0.5.0 for macOS Apple Silicon</strong><br>
+  <a href="https://github.com/VHSMODDING/HitAndRun-macOS/releases/download/v0.5.0/HitAndRun-v0.5.0-macOS-arm64.dmg">Download DMG</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/VHSMODDING/HitAndRun-macOS/releases/download/v0.5.0/HitAndRun-v0.5.0-macOS-arm64.002.dmgpart">Download required second part</a>
+  &nbsp;·&nbsp;
+  <a href="https://github.com/VHSMODDING/HitAndRun-macOS/releases/tag/v0.5.0">Release notes</a>
+</p>
+
+Download both files into the same folder without renaming them. Open the `.dmg`
+and copy **The Simpsons Hit & Run.app** to Applications. Both downloads are required;
+the second part is read automatically when opening the DMG.
+
+This preview is for macOS Apple Silicon only. It is not notarized by Apple,
+and gameplay is still under active validation.
+
 ---
 
 ## Status
