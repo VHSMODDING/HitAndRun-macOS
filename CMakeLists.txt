@@ -627,8 +627,8 @@ set_target_properties(HitAndRunPortHost PROPERTIES
     # CMake writes this value directly into Info.plist; XML requires '&' to
     # be escaped or LaunchServices rejects the bundle before main() runs.
     MACOSX_BUNDLE_BUNDLE_NAME "Hit &amp; Run Port Host"
-    MACOSX_BUNDLE_SHORT_VERSION_STRING "0.1"
-    MACOSX_BUNDLE_BUNDLE_VERSION "1"
+    MACOSX_BUNDLE_SHORT_VERSION_STRING "0.5.0"
+    MACOSX_BUNDLE_BUNDLE_VERSION "500"
 )
 
 # A built application must be self-contained: its licensed PC game data is

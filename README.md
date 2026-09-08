@@ -47,6 +47,11 @@ have been completed and tested on device.
 
 ## Build and launch
 
+The local **v0.5.0 preview** is prepared with `bash port/macos/package-release.sh`.
+It bundles libpng and produces an ad-hoc-signed `.app` plus segmented DMG files
+in `dist/v0.5.0-upload`. Packaging does not upload anything to GitHub.
+See [release notes](RELEASE-v0.5.0.md) for installation and known limitations.
+
 ```sh
 cmake -S . -B build/macos-arm64 -DCMAKE_OSX_ARCHITECTURES=arm64
 cmake --build build/macos-arm64 --target HitAndRunPortHost stage_game_data -j4
