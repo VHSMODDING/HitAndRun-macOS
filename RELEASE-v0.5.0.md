@@ -6,9 +6,9 @@ Native C++/Cocoa port of the PC game; no Wine or CrossOver.
 - Save-screen fixes and corrected subtractive blending for shadows.
 - Keyboard/controller, French text and HUD work remain under validation.
 
-Download BOTH the `.dmg` and `.dmgpart` assets into the SAME folder, without
-renaming them. Open the `.dmg`, copy the application to a writable folder such as Applications,
-then launch it. This build uses an ad-hoc signature, not an Apple Developer ID
+Download the small installer DMG, open **Hit & Run Installer**, then select
+**Install**. It downloads and verifies the two data segments and installs the game
+in `~/Applications`. This build uses an ad-hoc signature, not an Apple Developer ID
 signature or notarization; macOS may require explicit approval on first launch.
 Do not disable system-wide security protections.
 

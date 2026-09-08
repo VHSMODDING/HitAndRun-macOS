@@ -14,16 +14,14 @@ use Wine, CrossOver, a Windows VM, or binary translation.
 
 <p align="center">
   <strong>Download v0.5.0 for macOS Apple Silicon</strong><br>
-  <a href="https://github.com/VHSMODDING/HitAndRun-macOS/releases/download/v0.5.0/HitAndRun-v0.5.0-macOS-arm64.dmg">Download DMG</a>
-  &nbsp;·&nbsp;
-  <a href="https://github.com/VHSMODDING/HitAndRun-macOS/releases/download/v0.5.0/HitAndRun-v0.5.0-macOS-arm64.002.dmgpart">Download required second part</a>
+  <a href="https://github.com/VHSMODDING/HitAndRun-macOS/releases/download/v0.5.0/HitAndRun-Installer-v0.5.0-macOS-arm64.dmg"><strong>Download installer</strong></a>
   &nbsp;·&nbsp;
   <a href="https://github.com/VHSMODDING/HitAndRun-macOS/releases/tag/v0.5.0">Release notes</a>
 </p>
 
-Download both files into the same folder without renaming them. Open the `.dmg`
-and copy **The Simpsons Hit & Run.app** to Applications. Both downloads are required;
-the second part is read automatically when opening the DMG.
+Open the installer DMG, launch **Hit & Run Installer**, then select **Install**.
+The installer downloads, verifies and installs **The Simpsons Hit & Run.app** in
+your user Applications folder. Approximately 3.3 GB will be downloaded.
 
 This preview is for macOS Apple Silicon only. It is not notarized by Apple,
 and gameplay is still under active validation.
