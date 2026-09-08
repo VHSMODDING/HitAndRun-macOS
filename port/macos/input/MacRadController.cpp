@@ -147,9 +147,17 @@ public:
             { "POV0", "POV" }, { "POV1", "POV" }
         };
         for (const Axis& axis : axes) mGamepad->AddPoint(axis.name, axis.type);
+        // Desktop UserController::DeriveDirectionValues maps [0,1] to [-1,1].
+        // Initialise before callbacks are registered: zero would mean full left.
+        for (unsigned i = 0; i < 8; ++i) mGamepad->Point(i)->SetValue(0.5f);
+        for (unsigned i = 8; i < 10; ++i) mGamepad->Point(i)->SetValue(1.0f);
+        mGamepad->SetConnected(false);
         for (int button = 0; button < 32; ++button) mGamepad->AddPoint(("Button" + std::to_string(button)).c_str(), "Button");
         mWheel = new MacController("SteeringWheel0", "Mac GameController", "Joystick");
         for (unsigned int index = 0; index < mGamepad->GetNumberOfInputPoints(); ++index) mWheel->AddPoint(mGamepad->GetInputPointByIndex(index)->GetName(), mGamepad->GetInputPointByIndex(index)->GetType());
+        for (unsigned i = 0; i < 8; ++i) mWheel->Point(i)->SetValue(0.5f);
+        for (unsigned i = 8; i < 10; ++i) mWheel->Point(i)->SetValue(1.0f);
+        mWheel->SetConnected(false);
         mControllers = { mKeyboard, mGamepad, mMouse, mWheel };
     }
     ~MacControllerSystem() { for (MacController* controller : mControllers) controller->Release(); }
@@ -197,15 +205,6 @@ public:
         keys[0xd0] = state.actions[MAC_ACTION_MENU_DOWN];
         keys[0xcb] = state.actions[MAC_ACTION_MENU_LEFT];
         keys[0xcd] = state.actions[MAC_ACTION_MENU_RIGHT];
-        // The original gamepad camera axes are stateful in this 2003 PC
-        // input path and can remain active after a stick release. Convert the
-        // right stick into the game's proven keyboard camera bindings, whose
-        // press/release edges are exact.
-        constexpr float cameraKeyThreshold = 0.35f;
-        keys[0x4b] = state.cameraX <= -cameraKeyThreshold; // NumPad 4
-        keys[0x4d] = state.cameraX >=  cameraKeyThreshold; // NumPad 6
-        keys[0x48] = state.cameraY >=  cameraKeyThreshold; // NumPad 8
-        keys[0x50] = state.cameraY <= -cameraKeyThreshold; // NumPad 2
         for (int key = 0; key < 256; ++key) mKeyboard->Point(key)->SetRange(0.0f, 1.0f), mKeyboard->Point(key)->SetValue(keys[key] ? 1.0f : 0.0f);
         mMouse->Point(0)->SetValue(state.trackpadDeltaX); mMouse->Point(1)->SetValue(state.trackpadDeltaY); mMouse->Point(2)->SetValue(0.0f);
         // The original PC mapping uses Mouse Button 0 for both DoAction and
@@ -214,14 +213,13 @@ public:
         mMouse->Point(3)->SetRange(0.0f, 1.0f); mMouse->Point(3)->SetValue((state.trackpadButtons[0] || state.actions[MAC_ACTION_ACTION]) ? 1.0f : 0.0f);
         mMouse->Point(4)->SetRange(0.0f, 1.0f); mMouse->Point(4)->SetValue(state.trackpadButtons[1] ? 1.0f : 0.0f);
         const float values[] = {
-            // Left-stick movement is delivered through the keyboard bridge,
-            // never as continuous legacy X/Y axes. This prevents menu drift.
-            0.0f, 0.0f, 0.0f,
-            0.0f, 0.0f, 0.0f,
-            // Xbox triggers are deliberately digital Button6/7 below.  Do
-            // not also leak their resting analogue values into Slider0/1:
-            // saved legacy mappings can otherwise see them as held inputs.
-            0.0f, 0.0f, 1.0f, 1.0f
+            // Native sticks use [-1,1]; the PC mapping consumes [0,1].
+            (state.steering + 1.0f) * 0.5f,
+            (state.gamepadMoveY + 1.0f) * 0.5f,
+            (state.cameraX + 1.0f) * 0.5f,
+            0.5f, 0.5f, (state.cameraY + 1.0f) * 0.5f,
+            // Unused sliders are centred too. Triggers currently use W/S.
+            0.5f, 0.5f, 1.0f, 1.0f
         };
         for (unsigned int index = 0; index < 10; ++index) { mGamepad->Point(index)->SetValue(values[index]); mWheel->Point(index)->SetValue(values[index]); }
         for (unsigned int button = 0; button < 32; ++button)
@@ -233,8 +231,9 @@ public:
         bool gamepadConnected = state.connectedControllerCount != 0;
         if (mGamepadConnected != gamepadConnected)
         {
-            mGamepadConnected = gamepadConnected; mGamepad->SetConnected(gamepadConnected); mWheel->SetConnected(gamepadConnected);
-            for (IRadControllerConnectionChangeCallback* callback : mConnectionCallbacks) { callback->OnControllerConnectionStatusChange(mGamepad); callback->OnControllerConnectionStatusChange(mWheel); }
+            mGamepadConnected = gamepadConnected; mGamepad->SetConnected(gamepadConnected);
+            // An Xbox pad is not a second, simultaneously active steering wheel.
+            for (IRadControllerConnectionChangeCallback* callback : mConnectionCallbacks) { callback->OnControllerConnectionStatusChange(mGamepad); }
         }
     }
 private:

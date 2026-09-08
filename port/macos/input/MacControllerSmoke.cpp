@@ -35,6 +35,13 @@ int main()
     }
 
     MacInputManager* input = MacInputShared();
+    // The actual desktop consumer applies 2*v-1, so every idle stick/slider
+    // must decode to zero even before the first service tick.
+    IRadController* gamepad = system->GetControllerAtLocation("Joystick0");
+    for (unsigned i = 0; i < 8; ++i)
+        if (2.0f * gamepad->GetInputPointByIndex(i)->GetCurrentValue(nullptr) - 1.0f != 0.0f)
+            return 7;
+    if (system->GetControllerAtLocation("SteeringWheel0")->IsConnected()) return 8;
     IRadController* keyboard = system->GetControllerAtLocation("Keyboard0");
     IRadController* mouse = system->GetControllerAtLocation("Mouse0");
     ButtonObserver observer;
@@ -67,6 +74,16 @@ int main()
         return 4;
     if (observer.changes != 2 || observer.lastValue != 0.0f)
         return 6;
+    ButtonObserver axisObserver;
+    IRadControllerInputPoint* mouseX = mouse->GetInputPointByName("XAxis");
+    mouseX->RegisterControllerInputPointCallback(&axisObserver, 0);
+    MacInputSetTrackpad(input, 0, 0, 0.1f, 0);
+    radControllerSystemService();
+    radControllerSystemService(); // releases the consumed delta
+    if (axisObserver.changes != 2 || axisObserver.lastValue != 0.0f) return 9;
+    for (unsigned i = 0; i < 120; ++i) radControllerSystemService();
+    if (axisObserver.changes != 2) return 10; // no phantom idle events
+    mouseX->UnRegisterControllerInputPointCallback(&axisObserver);
     returnKey->UnRegisterControllerInputPointCallback(&observer);
     radControllerTerminate();
     mutex->Release();

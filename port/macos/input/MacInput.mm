@@ -181,19 +181,11 @@ void MacInputUpdate(MacInputManager* manager, MacInputState* state)
         ++state->connectedControllerCount;
         // GameController normalises the physical layouts of Xbox, PlayStation
         // and Switch Pro pads into these logical controls.
-        // Retain a deliberately conservative neutral zone.  This old engine
-        // treats even a minute non-zero axis value as a held menu direction.
+        // Filter physical stick noise before conversion to the PC axis range.
         const float steering = ClampAxis(pad.leftThumbstick.xAxis.value, 0.30f);
         const float moveY = ClampAxis(pad.leftThumbstick.yAxis.value, 0.30f);
-        // The PC input layer rebroadcasts a non-zero analogue axis every
-        // frame, including through front-end menus. On modern Bluetooth
-        // controllers this turns residual values into endless navigation.
-        // Feed the left stick through the reliable digital W/S/A/D bridge.
-        constexpr float stickButtonThreshold = 0.45f;
-        state->actions[MAC_ACTION_STEER_LEFT] |= steering <= -stickButtonThreshold;
-        state->actions[MAC_ACTION_STEER_RIGHT] |= steering >= stickButtonThreshold;
-        state->actions[MAC_ACTION_ACCELERATE] |= moveY >= stickButtonThreshold;
-        state->actions[MAC_ACTION_BRAKE] |= moveY <= -stickButtonThreshold;
+        if (std::abs(steering) > std::abs(state->steering)) state->steering = steering;
+        if (std::abs(moveY) > std::abs(state->gamepadMoveY)) state->gamepadMoveY = moveY;
         const float throttle = TriggerPressed(pad.rightTrigger.value) ? pad.rightTrigger.value : 0.0f;
         const float brake = TriggerPressed(pad.leftTrigger.value) ? pad.leftTrigger.value : 0.0f;
         state->throttle = std::max(state->throttle, throttle);
@@ -204,8 +196,6 @@ void MacInputUpdate(MacInputManager* manager, MacInputState* state)
         if (std::abs(cameraY) > std::abs(state->cameraY)) state->cameraY = cameraY;
         state->actions[MAC_ACTION_ACCELERATE] |= TriggerPressed(pad.rightTrigger.value);
         state->actions[MAC_ACTION_BRAKE] |= TriggerPressed(pad.leftTrigger.value);
-        state->actions[MAC_ACTION_STEER_LEFT] |= pad.leftThumbstick.xAxis.value < -0.35f;
-        state->actions[MAC_ACTION_STEER_RIGHT] |= pad.leftThumbstick.xAxis.value > 0.35f;
         state->actions[MAC_ACTION_CONFIRM] |= Pressed(pad.buttonA);
         state->actions[MAC_ACTION_CANCEL] |= Pressed(pad.buttonB);
         state->actions[MAC_ACTION_ACTION] |= Pressed(pad.buttonX);

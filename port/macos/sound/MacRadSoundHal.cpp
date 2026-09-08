@@ -38,7 +38,25 @@ public:
     ~MacBuffer() override = default;
 
     void Initialize(IRadSoundHalAudioFormat* format, IRadMemoryObject* memory, unsigned frames, bool looping, bool streaming) override
-    { mFormat = format; mMemory = memory; mFrames = frames; mLooping = looping; mStreaming = streaming; }
+    {
+        mFormat = format;
+        mMemory = memory;
+        mFrames = frames;
+        mLooping = looping;
+        mStreaming = streaming;
+        mFramesEverLoaded = 0;
+        mPendingLoadStart = 0;
+        mPendingLoadFrames = 0;
+        // radMemoryAllocAligned intentionally returns uninitialised memory.
+        // Audio may start before an async RSD read completes, so every buffer
+        // must begin as PCM silence rather than leaking arbitrary memory as a
+        // permanent hiss/crackle into the output queue.
+        if (mMemory && mFormat && mFrames)
+        {
+            const unsigned char silence = mFormat->GetBitResolution() == 8 ? 128 : 0;
+            std::memset(mMemory->GetMemoryAddress(), silence, mFormat->FramesToBytes(mFrames));
+        }
+    }
     IRadSoundHalAudioFormat* GetFormat() override { return mFormat; }
     IRadMemoryObject* GetMemoryObject() override { return mMemory; }
     bool IsLooping() override { return mLooping; }
@@ -60,7 +78,8 @@ public:
         mLoadCallback = callback;
         const unsigned clampedStart = std::min(start, mFrames);
         const unsigned clampedFrames = std::min(frames, mFrames - clampedStart);
-        mPendingLoadEnd = clampedStart + clampedFrames;
+        mPendingLoadStart = clampedStart;
+        mPendingLoadFrames = clampedFrames;
         source->GetFramesAsync(static_cast<char*>(mMemory->GetMemoryAddress()) + mFormat->FramesToBytes(clampedStart), radMemorySpace_Local, clampedFrames, this);
     }
     void ClearAsync(unsigned start, unsigned frames, IRadSoundHalBufferClearCallback* callback) override
@@ -85,7 +104,9 @@ public:
         // portion actually written, tracked from the front of the ring so
         // that a still-priming stream's read cursor only ever advances
         // into memory that genuinely holds decoded audio.
-        mFramesEverLoaded = std::min(mFrames, std::max(mFramesEverLoaded, mPendingLoadEnd));
+        const unsigned actualFrames = std::min(frames, mPendingLoadFrames);
+        const unsigned actualEnd = std::min(mFrames, mPendingLoadStart + actualFrames);
+        mFramesEverLoaded = std::min(mFrames, std::max(mFramesEverLoaded, actualEnd));
         if (SoundTraceEnabled())
         {
             rReleasePrintf( "macOS sound: OnDataSourceFramesLoaded frames=%u streaming=%d loaded=%u/%u\n",
@@ -100,7 +121,8 @@ private:
     bool mLooping;
     bool mStreaming;
     unsigned mFramesEverLoaded = 0;
-    unsigned mPendingLoadEnd = 0;
+    unsigned mPendingLoadStart = 0;
+    unsigned mPendingLoadFrames = 0;
     ref<IRadSoundHalBufferLoadCallback> mLoadCallback;
 };
 
